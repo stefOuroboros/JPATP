@@ -1,72 +1,61 @@
 package main;
+import java.time.LocalDate;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.TypedQuery;
-
-import model.Book;
-import model.Client;
-import model.Gender;
+import dao.PersonDao;
+import dao.ReservationsDao;
+import dao.VolsDao;
+import model.Menu;
+import model.Person;
+import model.PlaneType;
+import model.Reservation;
+import model.Vol;
 
 public class Main {
 
 	public static void main(String[] args) {
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory("unit");
-		EntityManager em = emf.createEntityManager();
-
-		em.getTransaction().begin();
-
-		Book book = new Book();
-		book.setTitle("UML For Java Programmers");
-		book.setAuthor("Robert Cecil Martin");
-		em.persist(book);
 		
-		Book book2 = new Book();
-		book2.setTitle("Twilight");
-		book2.setAuthor("Stéphanie Meyer");
-		em.persist(book2);
+		Menu.menu();
 		
-
-		Client client = new Client();
-		client.setFirstname("Bob");
-		client.setLastname("Obo");
-		client.setGender(Gender.M);
-		ArrayList<Book> clientListBooks = new ArrayList<Book>();
-		clientListBooks.add(book);
-		clientListBooks.add(book2);
-		client.setBestBook(book);
-		client.setBooks(clientListBooks);
-		em.persist(client);
-
+		VolsDao volsDao = VolsDao.instance();
+		Vol v1 = new Vol("0001", PlaneType.A330, 150L, "Montpellier", "Paris", LocalDate.now());
+		volsDao.persist(v1);
 		
-		em.getTransaction().commit();
-		em.close();
-
-		em = emf.createEntityManager();
-		Client findClient = em.find(Client.class, client.getId());
-		System.out.println(findClient.getFirstname()
-				+ " " + findClient.getLastname()
-				+ " a acheté les livres " + client.getBooks());
-		em.close();
-
-		em = emf.createEntityManager();
-		TypedQuery<Client> query = em.createQuery(
-			       "SELECT DISTINCT c " +
-			               "FROM Client c " +
-			               "INNER JOIN FETCH c.books b " +
-			               "WHERE b.id=:id ", Client.class);
-			query.setParameter("id", book.getId());
-			List<Client> listClient = query.getResultList();
-			
-			for (Client cli : listClient) {
-				System.out.println(cli);
-			}
-		em.close();
-
+		Vol v2 = new Vol("0002", PlaneType.A340, 200L, "Marseille", "Beijin", LocalDate.parse("2018-10-31"));
+		volsDao.persist(v2);
+		
+		Vol v3 = new Vol("0003", PlaneType.B747, 80L, "Calais", "Londres", LocalDate.parse("2019-01-05"));
+		volsDao.persist(v3);
+		
+		PersonDao personDao = PersonDao.instance();
+		Person p1 = new Person("Stef", "Gallois", LocalDate.parse("1993-10-20"));
+		personDao.persist(p1);
+		
+		Person p2 = new Person("Thomas", "Champetier", LocalDate.parse("1996-07-11"));
+		personDao.persist(p2);
+		
+		Person p3 = new Person("Lola", "Canal", LocalDate.parse("1991-01-14"));
+		personDao.persist(p3);
+		
+		ReservationsDao reservationDao = ReservationsDao.instance();
+		Reservation r1 = new Reservation("1", p1, v1);
+		reservationDao.persist(r1);
+		
+		Reservation r2 = new Reservation("2", p2, v2);
+		reservationDao.persist(r2);
+		
+		Reservation r3 = new Reservation("3", p3, v3);
+		reservationDao.persist(r3);
+		
+		v1.setArrivalCity("Bankok");
+		volsDao.merge(v1);
+//		reservationDao.remove(r1);
+//		reservationDao.remove(r2);
+//		reservationDao.remove(r3);
+//		volsDao.remove(v2);
+		
+		System.out.println(volsDao.find(3));
+		System.out.println(personDao.findAll());
+		
 	}
 
 }
